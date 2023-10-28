@@ -13,25 +13,30 @@ sealed class TagDrawer : System.IDisposable
     float bucket_orientation = 0.0f;
     float log_tick_sec = 1.0f;
     float log_cd = 2.0f;
-    bool useBucket = false;
+    bool useBucket = true;
     public TagDrawer(Material material)
     {
-        
-
-        bucketMeshFile = Resources.Load("candyBucket") as GameObject;
-        bucketMeshFile.transform.Rotate(Vector3.forward, 90.0f);//bringt nichts
-
-        if (!bucketMeshFile)
+        if (useBucket)
         {
-            Debug.Log("bucketMeshFile not found");
-            _mesh = BuildCoordinateAxes();
+            bucketMeshFile = Resources.Load("candyBucket") as GameObject;
+            //bucketMeshFile.transform.Rotate(Vector3.forward, 90.0f);//bringt nichts
+
+            if (!bucketMeshFile)
+            {
+                Debug.Log("bucketMeshFile not found");
+                
+            }
+            else
+            {
+                _mesh = bucketMeshFile.GetComponent<MeshFilter>().sharedMesh;
+            }
+
         }
         else
         {
-            _mesh = bucketMeshFile.GetComponent<MeshFilter>().sharedMesh;
-            useBucket = true;
+            _mesh = BuildMesh();
         }
-        
+
         //if (!_bucketAssetRef)
         //    Debug.Log("ScriptableObject asset reference invalid");
 
@@ -43,7 +48,6 @@ sealed class TagDrawer : System.IDisposable
         //if (!_mesh)
         //    Debug.Log("bucket mesh not found");
 
-        //_mesh = BuildMesh();
         _sharedMaterial = material;
     }
     
@@ -55,6 +59,16 @@ sealed class TagDrawer : System.IDisposable
         angles.x = bucket_orientation;
         rotation.eulerAngles = angles;
         return rotation;
+    }
+    public void rotate_bucket_object()
+    {
+        Debug.Log("Bucket object rotation = " + bucket_orientation);
+        Transform transform = bucketMeshFile.transform;
+        Vector3 angles = transform.rotation.eulerAngles;
+        bucket_orientation += bucket_rotation_speed * Time.fixedDeltaTime;
+        angles.x = bucket_orientation;
+        bucketMeshFile.transform.rotation = transform.rotation;
+     
     }
     public void Dispose()
     {
@@ -92,9 +106,11 @@ sealed class TagDrawer : System.IDisposable
         }
 
         //rotation.Normalize();
-        position.y += 0.02f;
+        position.y += 0.01f;
+        position.x -= 0.01f;
         Quaternion rotation_animated = rotate_bucket(rotation); //rotation quaternion treats axes as global
-        var xform = Matrix4x4.TRS(position, rotation_animated, Vector3.one * scale);
+        //rotate_bucket_object();
+        var xform = Matrix4x4.TRS(position, rotation, Vector3.one * scale);
         //public static void DrawMesh(Mesh mesh, Vector3 position, Quaternion rotation, Material material, int layer, Camera camera, int submeshIndex, MaterialPropertyBlock properties, Rendering.ShadowCastingMode castShadows, bool receiveShadows = true, Transform probeAnchor = null, bool useLightProbes = true); 
         if (useBucket)
         {
@@ -113,49 +129,7 @@ sealed class TagDrawer : System.IDisposable
         }
 
     }
-    static Mesh BuildCoordinateAxes()
-    {
-        var axisLength = 1.0f; // Length of the axes
-        var axisThickness = 0.02f; // Thickness of the axes
-
-        // Define the vertices for the axes
-        var vtx = new Vector3[]
-        {
-        // X-axis
-        new Vector3(0, 0, 0),
-        new Vector3(axisLength, 0, 0),
-
-        // Y-axis
-        new Vector3(0, 0, 0),
-        new Vector3(0, axisLength, 0),
-
-        // Z-axis
-        new Vector3(0, 0, 0),
-        new Vector3(0, 0, axisLength)
-        };
-
-        // Define the indices for the axes
-        var idx = new int[]
-        {
-        0, 1, // X-axis
-        2, 3, // Y-axis
-        4, 5  // Z-axis
-        };
-
-        var mesh = new Mesh();
-        mesh.vertices = vtx;
-        mesh.SetIndices(idx, MeshTopology.Lines, 0);
-
-        // Apply a line thickness to the axes by scaling them
-        Vector3[] scaledVertices = new Vector3[vtx.Length];
-        for (int i = 0; i < vtx.Length; i++)
-        {
-            scaledVertices[i] = Vector3.Scale(vtx[i], new Vector3(axisThickness, axisThickness, axisThickness));
-        }
-        mesh.vertices = scaledVertices;
-
-        return mesh;
-    }
+ 
     static Mesh BuildMesh()
     {
         var vtx = new Vector3 [] { new Vector3(-0.5f, -0.5f, 0),
