@@ -18,7 +18,7 @@ sealed class TagDrawer : System.IDisposable
     {
         
 
-        bucketMeshFile = Resources.Load("candyBuckets") as GameObject;
+        bucketMeshFile = Resources.Load("candyBucket") as GameObject;
         bucketMeshFile.transform.Rotate(Vector3.forward, 90.0f);//bringt nichts
 
         if (!bucketMeshFile)
@@ -43,7 +43,7 @@ sealed class TagDrawer : System.IDisposable
         //if (!_mesh)
         //    Debug.Log("bucket mesh not found");
 
-        _mesh = BuildMesh();
+        //_mesh = BuildMesh();
         _sharedMaterial = material;
     }
     
