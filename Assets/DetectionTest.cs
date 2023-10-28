@@ -41,8 +41,14 @@ sealed class DetectionTest : MonoBehaviour
         _detector.ProcessImage(image, fov, _tagSize);
 
         // Detected tag visualization
+
+        //var poses = _detector.DetectedTags.ToList();
+        //if(poses.Count > 0)
+        //    _drawer.Draw(poses[0].ID, poses[0].Position, poses[0].Rotation, _tagSize);
+
         foreach (var tag in _detector.DetectedTags)
             _drawer.Draw(tag.ID, tag.Position, tag.Rotation, _tagSize);
+
 
         // Profile data output (with 30 frame interval)
         if (Time.frameCount % 30 == 0)
