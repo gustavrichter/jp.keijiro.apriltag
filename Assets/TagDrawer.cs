@@ -92,11 +92,12 @@ sealed class TagDrawer : System.IDisposable
         //public static void DrawMesh(Mesh mesh, Vector3 position, Quaternion rotation, Material material, int layer, Camera camera, int submeshIndex, MaterialPropertyBlock properties, Rendering.ShadowCastingMode castShadows, bool receiveShadows = true, Transform probeAnchor = null, bool useLightProbes = true); 
         if (useBucket)
         {
+            //man kann auch einfach parenting verwenden um das offset translation + rotation zu realisieren. einfach empty gameobject
             bucketObject.transform.localScale = Vector3.one * scale;
             bucketObject.transform.position = corrected_pos;
             bucketObject.transform.rotation = corrected_rot;
 
-            //for (int i = 0; i < _mesh.subMeshCount; i++)
+            //for (int i = 0; i < _mesh.subMeshCount; i++)//nicht geeignet sobald das mesh auch noch animiert werden soll im Vgl zu GameObject Instantiate
             //{
             //    Graphics.DrawMesh(_mesh, corrected_xform, bucketMeshFile.GetComponent<MeshRenderer>().sharedMaterials[i], 0, null, i);
             //}
