@@ -7,20 +7,20 @@ sealed class TagDrawer : System.IDisposable
     Material _sharedMaterial;
     public ScriptObjBucketAssetRef _bucketAssetRef;
 
-    GameObject bucketMeshFile;
+    GameObject bucketMeshFile; //draw mesh
+    GameObject bucketObject; // or instantiate a gameobject
 
-    float bucket_rotation_speed = 100.0f;
-    float bucket_orientation = 0.0f;
-    float log_tick_sec = 1.0f;
-    float log_cd = 2.0f;
+    float log_tick_sec = 3.0f;
+    float log_cd = 0.0f;
+    int it = 0;
     bool useBucket = true;
     public TagDrawer(Material material)
     {
         if (useBucket)
         {
             bucketMeshFile = Resources.Load("candyBucket") as GameObject;
-            //bucketMeshFile.transform.Rotate(Vector3.forward, 90.0f);//bringt nichts
-
+            bucketObject = GameObject.Instantiate(bucketMeshFile, Vector3.zero, Quaternion.identity);
+         
             if (!bucketMeshFile)
             {
                 Debug.Log("bucketMeshFile not found");
@@ -51,25 +51,6 @@ sealed class TagDrawer : System.IDisposable
         _sharedMaterial = material;
     }
     
-    public Quaternion rotate_bucket(Quaternion rotation)
-    {
-        //Debug.Log("Y_Bucket_rotation = " + bucket_orientation);
-        Vector3 angles = rotation.eulerAngles;
-        bucket_orientation += bucket_rotation_speed * Time.fixedDeltaTime;
-        angles.x = bucket_orientation;
-        rotation.eulerAngles = angles;
-        return rotation;
-    }
-    public void rotate_bucket_object()
-    {
-        Debug.Log("Bucket object rotation = " + bucket_orientation);
-        Transform transform = bucketMeshFile.transform;
-        Vector3 angles = transform.rotation.eulerAngles;
-        bucket_orientation += bucket_rotation_speed * Time.fixedDeltaTime;
-        angles.x = bucket_orientation;
-        bucketMeshFile.transform.rotation = transform.rotation;
-     
-    }
     public void Dispose()
     {
         if (_mesh)
@@ -87,40 +68,38 @@ sealed class TagDrawer : System.IDisposable
     public void Draw(int id, Vector3 position, Quaternion rotation, float scale)
     {
         Vector3 angles = rotation.eulerAngles;
-        //Debug.Log(bucketMeshFile.name);
-        //Debug.Log("Bucket-Orientation: " + bucketMeshFile.transform.rotation.eulerAngles + ". Bucket-Position: " + bucketMeshFile.transform.position);
-        //wenn tag parallel und aufrecht zur kamera, enstpricht orientierung (0,0,0)
-        //bucket um +90 Grad um x-achse drehen, damit bucket mit boden auf tag steht
-        //angles.x -= 90.0f;
-        //rotation.eulerAngles = angles;
+        Vector3 offset_pos = new Vector3(0.0f, 0.33f, 0.0f) * scale;
+        Vector3 corrected_pos = position + offset_pos;
+        Quaternion corrected_rot = rotation * Quaternion.Euler(-90,0,0);
+        Vector3 corrected_angles = corrected_rot.eulerAngles;
 
-        
+        //debug message every lock_tick_sec seconds
         if (log_cd <= 0.0f)
         {
-            Debug.Log("Tag-Orientation: X=" + angles.x + ", Y =" + angles.y + ", Z = " + angles.z + ". Tag-Position: " + position);
+            Debug.Log( ++it + ". ---------TagvsBucket--------------");
+            Debug.Log("X= " + angles.x + " vs " + corrected_angles.x);
+            Debug.Log("Y= " + angles.y + " vs " + corrected_angles.y);
+            Debug.Log("Z= " + angles.z + " vs " + corrected_angles.z);
+            Debug.Log("Pos= " + position + " vs " + corrected_pos);
             log_cd = log_tick_sec;
         }
         else
         {
             log_cd -= Time.fixedDeltaTime;
         }
-
-        //rotation.Normalize();
-        position.y += 0.01f;
-        position.x -= 0.01f;
-        Quaternion rotation_animated = rotate_bucket(rotation); //rotation quaternion treats axes as global
-        //rotate_bucket_object();
+        var corrected_xform = Matrix4x4.TRS(corrected_pos, corrected_rot, Vector3.one * scale);
         var xform = Matrix4x4.TRS(position, rotation, Vector3.one * scale);
         //public static void DrawMesh(Mesh mesh, Vector3 position, Quaternion rotation, Material material, int layer, Camera camera, int submeshIndex, MaterialPropertyBlock properties, Rendering.ShadowCastingMode castShadows, bool receiveShadows = true, Transform probeAnchor = null, bool useLightProbes = true); 
         if (useBucket)
         {
+            bucketObject.transform.localScale = Vector3.one * scale;
+            bucketObject.transform.position = corrected_pos;
+            bucketObject.transform.rotation = corrected_rot;
 
-            for (int i = 0; i < _mesh.subMeshCount; i++)
-            {
-
-                Graphics.DrawMesh(_mesh, xform, bucketMeshFile.GetComponent<MeshRenderer>().sharedMaterials[i], 0, null, i);
-
-            }
+            //for (int i = 0; i < _mesh.subMeshCount; i++)
+            //{
+            //    Graphics.DrawMesh(_mesh, corrected_xform, bucketMeshFile.GetComponent<MeshRenderer>().sharedMaterials[i], 0, null, i);
+            //}
         }
         else
         {
